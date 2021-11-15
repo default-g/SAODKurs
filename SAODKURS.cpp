@@ -3,8 +3,6 @@
 #include <iostream>
 #include <string>
 
-
-
 #define AMOUNT_TO_PRINT_PER_ONCE 20
 #define AMOUNT_OF_RECORDS 4000
 
@@ -29,7 +27,6 @@ class Node {
 public:
   Node *next = nullptr;
   Record data;
-  
 };
 
 std::ostream &operator<<(std::ostream &strm, const Record &data) {
@@ -39,7 +36,10 @@ std::ostream &operator<<(std::ostream &strm, const Record &data) {
 
 class Queue {
 public:
-  Queue() { head = nullptr; tail = head; }
+  Queue() {
+    head = nullptr;
+    tail = head;
+  }
   bool isSorted = false;
   unsigned int getSize();
   void addNode(Record record);
@@ -50,19 +50,21 @@ public:
   Node *tail;
 };
 
-Record Queue::get(unsigned int index){
-    if(!this->head) throw std::invalid_argument("Empty");
-    if(index < 0 || index > this->getSize()) throw std::invalid_argument( "Out of bounds" );
-    Node *temp = head;
-    int iterator = 0;
-    while(temp){
-      if(iterator==index){
-        return temp->data;
-      } else {
-        iterator++;
-        temp = temp->next;
-      };
+Record Queue::get(unsigned int index) {
+  if (!this->head)
+    throw std::invalid_argument("Empty");
+  if (index < 0 || index > this->getSize())
+    throw std::invalid_argument("Out of bounds");
+  Node *temp = head;
+  int iterator = 0;
+  while (temp) {
+    if (iterator == index) {
+      return temp->data;
+    } else {
+      iterator++;
+      temp = temp->next;
     };
+  };
 };
 
 unsigned int Queue::getSize() {
@@ -93,7 +95,6 @@ void Queue::addNode(Record record) {
     tail = temp->next;
   }
 }
-
 
 void Queue::print() {
   if (!head) {
@@ -155,7 +156,7 @@ void radixSort(Node *&S) {
     }
     p->next = nullptr;
   }
-  
+
   L = sizeof(p->data.a);
   for (j = L - 1; j >= 0; j--) {
     for (i = 0; i < 256; i++) {
@@ -198,83 +199,82 @@ Record **Queue::buildIndexArray() {
   return newIndexArray;
 }
 
-bool areDatesEqual(unsigned char a1[10], unsigned char a2[10]){
+bool areDatesEqual(unsigned char a1[10], unsigned char a2[10]) {
   int day1 = (a1[0] - '0') * 10 + (a1[1] - '0');
   int day2 = (a2[0] - '0') * 10 + (a2[1] - '0');
-  int month1 = (a1[3]  - '0') * 10 + (a1[4] - '0');
-  int month2 = (a2[3]  - '0') * 10 + (a2[4] - '0');
+  int month1 = (a1[3] - '0') * 10 + (a1[4] - '0');
+  int month2 = (a2[3] - '0') * 10 + (a2[4] - '0');
   int year1 = (a1[6] - '0') * 10 + (a1[7]);
   int year2 = (a2[6] - '0') * 10 + (a2[7]);
   return (day1 == day2) && (month1 == month2) && (year1 == year2);
 }
 
 bool isLarger(Record record1, Record record2) {
-    if (record1.c > record2.c) {
+  if (record1.c > record2.c) {
+    return true;
+  } else if (record1.c == record2.c) {
+    if (record1.d > record2.d) {
+      return true;
+    } else if (record1.d == record2.d) {
+      if (charArrayToString(record1.e, 10) > charArrayToString(record2.e, 10)) {
         return true;
-    }
-    else if (record1.c == record2.c) {
-      if(record1.d > record2.d) {
-        return true;
-      } else if(record1.d == record2.d){
-        if(charArrayToString(record1.e, 10) > charArrayToString(record2.e, 10)) {
-          return true;
-        } else {
-          return false;
-        }
       } else {
         return false;
       }
     } else {
       return false;
     }
+  } else {
+    return false;
+  }
 }
 
-bool isEqual(Record record1, Record record2){
-  return (record1.c == record2.c) && (record1.d == record2.d) && areDatesEqual(record1.e, record2.e );
+bool isEqual(Record record1, Record record2) {
+  return (record1.c == record2.c) && (record1.d == record2.d) &&
+         areDatesEqual(record1.e, record2.e);
 }
 
-bool treeSearch(Vertex *p, Record record){
+bool treeSearch(Vertex *p, Record record) {
   while (p) {
 
-    if(isEqual(p->data, record)){
+    if (isEqual(p->data, record)) {
       return true;
-    } else if (isLarger(p->data, record)){
+    } else if (isLarger(p->data, record)) {
       p = p->left;
     } else {
       p = p->right;
     }
-    
-};
+  };
   return false;
 }
-void addToSDPrec(Record record, Vertex *&p){
-  if(!p){
+void addToSDPrec(Record record, Vertex *&p) {
+  if (!p) {
     p = new Vertex;
     p->data = record;
-  } else if(isLarger(record, p->data)) {
+  } else if (isLarger(record, p->data)) {
     addToSDPrec(record, p->right);
   } else {
     addToSDPrec(record, p->left);
   }
 }
 
-void A1(Vertex *&root, Record **indexArray, int size){
+void A1(Vertex *&root, Record **indexArray, int size) {
   int W[size];
-  for(int i = 0; i < size; i++){
+  for (int i = 0; i < size; i++) {
     W[i] = rand() % 100;
   };
   int i, j;
-    for (i = 0; i < size-1; i++)    
-    for (j = 0; j < size-i-1; j++)
-        if (W[j] < W[j+1]){
-            int tmp = W[j];
-            W[j] = W[j + 1];
-            W[j + 1] = tmp;
-            Record tmpRecord = *indexArray[j];
-            *indexArray[j] = *indexArray[j+1];
-            *indexArray[j+1] = tmpRecord;
-        }
-  for(int i = 0; i < size; i++){
+  for (i = 0; i < size - 1; i++)
+    for (j = 0; j < size - i - 1; j++)
+      if (W[j] < W[j + 1]) {
+        int tmp = W[j];
+        W[j] = W[j + 1];
+        W[j + 1] = tmp;
+        Record tmpRecord = *indexArray[j];
+        *indexArray[j] = *indexArray[j + 1];
+        *indexArray[j + 1] = tmpRecord;
+      }
+  for (int i = 0; i < size; i++) {
     addToSDPrec(*indexArray[i], root);
   }
 }
@@ -289,48 +289,47 @@ void printFromLeftToRight(Vertex *p) {
   }
 }
 
-void menuForTree(Queue list){
+void menuForTree(Queue list) {
   Vertex *root = nullptr;
-  A1(root, list.buildIndexArray(), list.getSize() );
+  A1(root, list.buildIndexArray(), list.getSize());
   printFromLeftToRight(root);
-  while(true) {
+  while (true) {
     int choice = 0;
     std::cout << "1. Print tree\n2. Tree search\n3. Exit from tree menu\n\n";
     std::cout << ">> ";
     std::cin >> choice;
-    switch(choice){
-      case 1: {
-        cnt = 1;
-        printFromLeftToRight(root);
-        break;
+    switch (choice) {
+    case 1: {
+      cnt = 1;
+      printFromLeftToRight(root);
+      break;
+    }
+    case 2: {
+      std::cout << "Search mode\n";
+      std::cout << "Input C >>";
+      short c;
+      std::cin >> c;
+      std::cout << "Input D >>";
+      short d;
+      std::cin >> d;
+      std::cout << "Input E >>";
+      unsigned char e[10];
+      std::cin >> e;
+      Record record{"", "", c, d};
+      for (int i = 0; i < 10; i++) {
+        record.e[i] = e[i];
       }
-      case 2: {
-        std::cout << "Search mode\n";
-        std::cout << "Input C >>";
-        short c;
-        std::cin >> c;
-        std::cout << "Input D >>";
-        short d;
-        std::cin >> d;
-        std::cout << "Input E >>";
-        unsigned char e[10];
-        std::cin >> e;
-        Record record{"", "", c, d};
-        for(int i = 0; i < 10; i++){
-          record.e[i] = e[i];
-        }
-        std::cout << "Searching for..." << record << "\n\n";
-        if(treeSearch(root, record)){
-          std::cout << "Found\n\n";
-        } else {
-          std::cout << "Not found\n\n";
-        }
-        break;
+      std::cout << "Searching for..." << record << "\n\n";
+      if (treeSearch(root, record)) {
+        std::cout << "Found\n\n";
+      } else {
+        std::cout << "Not found\n\n";
       }
-      case 3: {
-        return;
-      }
-      
+      break;
+    }
+    case 3: {
+      return;
+    }
     }
   }
 }
@@ -357,17 +356,15 @@ void binarySearch(Record **indexArray, std::string key) {
     cout << setw(6) << number++ << ") " << temp->data;
     temp = temp->next;
   }
-  if(number > 1){
+  if (number > 1) {
     int choice;
     std::cout << "Do you want to see a tree? 0/1 :";
     std::cin >> choice;
-    if(choice) {
+    if (choice) {
       menuForTree(listWithFound);
     }
+  }
 }
-}
-
-
 
 int main() {
   string db = "testBase4.dat";
