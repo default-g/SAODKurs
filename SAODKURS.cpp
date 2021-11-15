@@ -2,7 +2,7 @@
 #include <iomanip>
 #include <iostream>
 #include <string>
-#include <bits/stdc++.h>
+
 
 
 #define AMOUNT_TO_PRINT_PER_ONCE 20
@@ -198,6 +198,16 @@ Record **Queue::buildIndexArray() {
   return newIndexArray;
 }
 
+bool areDatesEqual(unsigned char a1[10], unsigned char a2[10]){
+  int day1 = (a1[0] - '0') * 10 + (a1[1] - '0');
+  int day2 = (a2[0] - '0') * 10 + (a2[1] - '0');
+  int month1 = (a1[3]  - '0') * 10 + (a1[4] - '0');
+  int month2 = (a2[3]  - '0') * 10 + (a2[4] - '0');
+  int year1 = (a1[6] - '0') * 10 + (a1[7]);
+  int year2 = (a2[6] - '0') * 10 + (a2[7]);
+  return (day1 == day2) && (month1 == month2) && (year1 == year2);
+}
+
 bool isLarger(Record record1, Record record2) {
     if (record1.c > record2.c) {
         return true;
@@ -219,6 +229,24 @@ bool isLarger(Record record1, Record record2) {
     }
 }
 
+bool isEqual(Record record1, Record record2){
+  return (record1.c == record2.c) && (record1.d == record2.d) && areDatesEqual(record1.e, record2.e );
+}
+
+bool treeSearch(Vertex *p, Record record){
+  while (p) {
+
+    if(isEqual(p->data, record)){
+      return true;
+    } else if (isLarger(p->data, record)){
+      p = p->left;
+    } else {
+      p = p->right;
+    }
+    
+};
+  return false;
+}
 void addToSDPrec(Record record, Vertex *&p){
   if(!p){
     p = new Vertex;
@@ -251,10 +279,12 @@ void A1(Vertex *&root, Record **indexArray, int size){
   }
 }
 
+int cnt = 1;
+
 void printFromLeftToRight(Vertex *p) {
   if (p) {
     printFromLeftToRight(p->left);
-    cout << p->data;
+    cout << setw(6) << cnt++ << ") " << p->data;
     printFromLeftToRight(p->right);
   }
 }
@@ -263,6 +293,46 @@ void menuForTree(Queue list){
   Vertex *root = nullptr;
   A1(root, list.buildIndexArray(), list.getSize() );
   printFromLeftToRight(root);
+  while(true) {
+    int choice = 0;
+    std::cout << "1. Print tree\n2. Tree search\n3. Exit from tree menu\n\n";
+    std::cout << ">> ";
+    std::cin >> choice;
+    switch(choice){
+      case 1: {
+        cnt = 1;
+        printFromLeftToRight(root);
+        break;
+      }
+      case 2: {
+        std::cout << "Search mode\n";
+        std::cout << "Input C >>";
+        short c;
+        std::cin >> c;
+        std::cout << "Input D >>";
+        short d;
+        std::cin >> d;
+        std::cout << "Input E >>";
+        unsigned char e[10];
+        std::cin >> e;
+        Record record{"", "", c, d};
+        for(int i = 0; i < 10; i++){
+          record.e[i] = e[i];
+        }
+        std::cout << "Searching for..." << record << "\n\n";
+        if(treeSearch(root, record)){
+          std::cout << "Found\n\n";
+        } else {
+          std::cout << "Not found\n\n";
+        }
+        break;
+      }
+      case 3: {
+        return;
+      }
+      
+    }
+  }
 }
 
 void binarySearch(Record **indexArray, std::string key) {
