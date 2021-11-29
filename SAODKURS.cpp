@@ -2,6 +2,8 @@
 #include <iomanip>
 #include <iostream>
 #include <string>
+#include <map>
+#include <bits/stdc++.h>
 
 #define AMOUNT_TO_PRINT_PER_ONCE 20
 #define AMOUNT_OF_RECORDS 4000
@@ -43,12 +45,32 @@ public:
   bool isSorted = false;
   unsigned int getSize();
   void addNode(Record record);
+  std::string listToString();
   Record get(unsigned int index);
   void print();
   Record **buildIndexArray();
   Node *head;
   Node *tail;
 };
+
+std::string Queue::listToString() {
+  if(!head) {
+    return "";
+  } else {
+    std::string stringToBeReturned;
+    Node *tmp = head;
+    while(tmp) {
+      stringToBeReturned += std::string((const char *)tmp->data.a) +
+      std::string((const char *)tmp->data.b) +
+      std::to_string(tmp->data.c) +
+      std::to_string(tmp->data.d) +
+      std::string((const char *)tmp->data.e);
+    tmp = tmp->next;
+    }
+      return stringToBeReturned;
+  }
+
+}
 
 Record Queue::get(unsigned int index) {
   if (!this->head)
@@ -236,7 +258,6 @@ bool isEqual(Record record1, Record record2) {
 
 bool treeSearch(Vertex *p, Record record) {
   while (p) {
-
     if (isEqual(p->data, record)) {
       return true;
     } else if (isLarger(p->data, record)) {
@@ -247,6 +268,7 @@ bool treeSearch(Vertex *p, Record record) {
   };
   return false;
 }
+
 void addToSDPrec(Record record, Vertex *&p) {
   if (!p) {
     p = new Vertex;
@@ -334,6 +356,67 @@ void menuForTree(Queue list) {
   }
 }
 
+std::string removeDuplicates(std::string s) {
+  auto last = s.end();
+    for ( auto first = s.begin(); first != last; ++first )
+    {
+        last = std::remove( std::next( first ), last, *first );
+    }
+    s.erase( last, s.end() );
+    return s;
+}
+
+std::string gilbertMooreEncode(std::string input) {
+  std::map <wchar_t, long int> amount;
+  for(char chr : input ){
+    if(amount.count(chr)) {
+      amount[chr]++;
+    } else {
+      amount.insert({chr, 1});
+    }
+  }
+  std::vector <double> probability;
+  long long int inputSize = input.size();
+  auto inputWithoutDuplicates = removeDuplicates(input);
+  std::sort(inputWithoutDuplicates.begin(), inputWithoutDuplicates.end());
+  for(char chr : inputWithoutDuplicates) {
+    probability.push_back(double(amount[chr]) / double(inputSize));
+  }
+  long long int n = inputWithoutDuplicates.size();
+  double Q[n];
+  int L[n];
+  char C[n][n];
+  for(int i = 0; i < n; i++){
+    for(int j = 0; j < n; j++){
+      C[i][j] = '\0';
+    }
+  }
+  double pr = 0;
+  for(int i = 0; i < n; i++) {
+    Q[i] = pr + probability[i] / 2;
+    pr += probability[i];
+    L[i] = -int(ceil(log2(probability[i]))) + 1;
+   }
+  for(int i = 0; i < n; i++) {
+    for(int j = 0; j < L[i]; j++) {
+      Q[i] = Q[i] * 2;
+      C[i][j] = '0' + int(floor(Q[i]));
+      if(Q[i] > 1) Q[i] -= 1;
+    }
+  }
+  std::map <char, std::string> codeTable;
+  for(int i = 0; i < n; i++){
+    std::cout << inputWithoutDuplicates[i] << " = " << C[i] << std::endl;
+    codeTable.insert({inputWithoutDuplicates[i], std::string(C[i])});
+  }
+  
+  std::string resultString = "";
+  for(char chr : input) {
+    resultString += codeTable[chr];
+  }
+  return resultString;
+}
+
 void binarySearch(Record **indexArray, std::string key) {
   int L = 0;
   int R = AMOUNT_OF_RECORDS - 1;
@@ -371,7 +454,7 @@ int main() {
   Queue list = readFromFile(db);
   while (true) {
     short int choice;
-    cout << "1. Print records\n2. Radix Sort of records\n3. Binary Search\n0. "
+    cout << "1. Print records\n2. Radix Sort of records\n3. Binary Search\n4. Encode\n0. "
             "Exit\n\n";
     cout << ">> ";
     cin >> choice;
@@ -399,6 +482,11 @@ int main() {
       string key;
       cin >> key;
       binarySearch(list.buildIndexArray(), key);
+      break;
+    } case 4: {
+      std::ofstream fout("out.txt");
+      fout << gilbertMooreEncode(list.listToString()) << std::endl;
+      fout.close();
       break;
     }
     case 0: {
