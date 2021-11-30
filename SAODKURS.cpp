@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 #include <map>
-#include <bits/stdc++.h>
+#include "stdc++.h"
 
 #define AMOUNT_TO_PRINT_PER_ONCE 20
 #define AMOUNT_OF_RECORDS 4000
@@ -356,7 +356,15 @@ void menuForTree(Queue list) {
   }
 }
 
-std::string removeDuplicates(std::string s) {
+double entropy(vector <double> probability){
+  double result = 0;
+  for(int i = 0; i < probability.size(); i++){
+    result -= probability[i] * log2(probability[i]);
+  };
+  return result;
+};
+
+vector <char> removeDuplicates(vector<char> s) {
   auto last = s.end();
     for ( auto first = s.begin(); first != last; ++first )
     {
@@ -366,23 +374,25 @@ std::string removeDuplicates(std::string s) {
     return s;
 }
 
-std::string gilbertMooreEncode(std::string input) {
-  std::map <wchar_t, long int> amount;
-  for(char chr : input ){
-    if(amount.count(chr)) {
-      amount[chr]++;
-    } else {
-      amount.insert({chr, 1});
-    }
+std::string gilbertMooreEncode(std::string path) {
+  char charArr[sizeof(Record) * AMOUNT_OF_RECORDS];
+  std::ifstream fin(path, std::ios::binary);
+  fin.read((char *)&charArr, sizeof(Record) * AMOUNT_OF_RECORDS);
+  fin.close();
+  std::map <char, int> amount;
+  int size = 0;
+  for(auto chr : charArr) {
+    amount[chr]++;
+    size++;
   }
+  
+  std::cout << size << std::endl;
   std::vector <double> probability;
-  long long int inputSize = input.size();
-  auto inputWithoutDuplicates = removeDuplicates(input);
-  std::sort(inputWithoutDuplicates.begin(), inputWithoutDuplicates.end());
-  for(char chr : inputWithoutDuplicates) {
-    probability.push_back(double(amount[chr]) / double(inputSize));
+  for(const auto &pair : amount) {
+    probability.push_back(double(pair.second) / double(size));
   }
-  long long int n = inputWithoutDuplicates.size();
+ 
+  int n = probability.size();
   double Q[n];
   int L[n];
   char C[n][n];
@@ -391,30 +401,45 @@ std::string gilbertMooreEncode(std::string input) {
       C[i][j] = '\0';
     }
   }
+  std::sort(probability.begin(), probability.end(), greater<>());
   double pr = 0;
-  for(int i = 0; i < n; i++) {
-    Q[i] = pr + probability[i] / 2;
-    pr += probability[i];
-    L[i] = -int(ceil(log2(probability[i]))) + 1;
-   }
-  for(int i = 0; i < n; i++) {
-    for(int j = 0; j < L[i]; j++) {
-      Q[i] = Q[i] * 2;
-      C[i][j] = '0' + int(floor(Q[i]));
-      if(Q[i] > 1) Q[i] -= 1;
+  L[0] = -floor(log2(probability[0]));
+  Q[0] = probability[0] / 2;
+  for(int i = 1; i < n; i++) {
+    double tmp = 0;
+    for(int k = 0; k < i; k++)
+      tmp += probability[k];
+      Q[i] = tmp + probability[i] / 2;
+      L[i] = -floor(log2(probability[i])) + 1;
+  }
+  for(int i = 0; i < n; i++){
+    for(int j = 0; j < L[i]; j++){
+      Q[i] *= 2;
+      C[i][j] = floor(Q[i]) + '0';
+      if(Q[i] > 1) {
+        Q[i] -= 1;
+      }
     }
   }
-  std::map <char, std::string> codeTable;
-  for(int i = 0; i < n; i++){
-    std::cout << inputWithoutDuplicates[i] << " = " << C[i] << std::endl;
-    codeTable.insert({inputWithoutDuplicates[i], std::string(C[i])});
-  }
   
-  std::string resultString = "";
-  for(char chr : input) {
-    resultString += codeTable[chr];
+  std::map <char, std::string> codeTable;
+  double averageLength = 0;
+  int i = 0;
+  for(const auto &pair: amount) {
+    std::cout << pair.first << " = " << C[i] << " - " << probability[i] << std::endl;
+    averageLength += L[i] * probability[i];
+    codeTable.insert({pair.first, C[i]});
+    i++;
   }
-  return resultString;
+
+
+  std::cout << "Entropy = " << entropy(probability) << std::endl;
+  std::cout << "Average L = " << averageLength << std::endl;
+  std::string output = "";
+  for(auto chr : charArr) {
+    output += codeTable[chr];
+  }
+  return output;
 }
 
 void binarySearch(Record **indexArray, std::string key) {
@@ -485,8 +510,8 @@ int main() {
       break;
     } case 4: {
       std::ofstream fout("out.txt");
-      fout << gilbertMooreEncode(list.listToString()) << std::endl;
-      fout.close();
+      std::string out = gilbertMooreEncode("testBase4.dat");
+      fout.write(reinterpret_cast <char *> (&out), sizeof(out));
       break;
     }
     case 0: {
